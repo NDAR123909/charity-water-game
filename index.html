@@ -27,12 +27,14 @@
             width: 100%;
             max-width: 400px;
             height: 100vh;
-            max-height: 700px;
+            max-height: 750px;
             background: #ffffff;
             border-radius: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             overflow: hidden;
             position: relative;
+            display: flex;
+            flex-direction: column;
         }
 
         .header {
@@ -130,11 +132,12 @@
         }
 
         .game-area {
-            height: 400px;
+            height: 350px;
             background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
             position: relative;
             overflow: hidden;
             border-bottom: 3px solid #4682B4;
+            flex: 1;
         }
 
         .item {
