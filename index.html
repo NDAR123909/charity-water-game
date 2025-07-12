@@ -11,8 +11,10 @@
             box-sizing: border-box;
         }
 
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+        
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Open Sans', 'Arial', sans-serif;
             background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
             min-height: 100vh;
             display: flex;
@@ -198,6 +200,35 @@
             align-items: center;
             background: #f8f9fa;
             border-top: 2px solid #ddd;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .difficulty-btn {
+            padding: 8px 12px;
+            border: 2px solid #007bff;
+            background: white;
+            color: #007bff;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .difficulty-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .difficulty-btn:hover {
+            transform: translateY(-1px);
         }
 
         .btn {
@@ -243,16 +274,40 @@
         }
 
         .footer {
-            padding: 10px;
+            padding: 15px;
             text-align: center;
             background: #f8f9fa;
             border-top: 1px solid #ddd;
             font-size: 12px;
             color: #666;
+            line-height: 1.6;
         }
 
         .footer a {
             color: #007bff;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 0 10px;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .footer .donate-link {
+            background: #28a745;
+            color: white !important;
+            padding: 8px 15px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .footer .donate-link:hover {
+            background: #218838;
             text-decoration: none;
         }
 
@@ -359,6 +414,39 @@
             animation: confettiFall 3s linear infinite;
         }
 
+        .milestone-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #333;
+            padding: 20px 30px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            z-index: 150;
+            animation: milestoneAppear 2s ease-out forwards;
+            text-align: center;
+            border: 3px solid #FF8C00;
+        }
+
+        @keyframes milestoneAppear {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
         @keyframes confettiFall {
             0% {
                 transform: translateY(-100vh) rotate(0deg);
@@ -411,13 +499,21 @@
         </div>
 
         <div class="controls">
+            <div class="difficulty-selector">
+                <button class="difficulty-btn active" data-difficulty="easy">EASY</button>
+                <button class="difficulty-btn" data-difficulty="normal">NORMAL</button>
+                <button class="difficulty-btn" data-difficulty="hard">HARD</button>
+            </div>
             <button class="btn btn-pause" id="pauseBtn">PAUSE</button>
             <button class="btn btn-start" id="startBtn">START</button>
             <button class="btn btn-boost" id="boostBtn">BOOST</button>
         </div>
 
         <footer class="footer">
-            Learn more at <a href="https://charitywater.org" target="_blank">charitywater.org</a>
+            Learn more at <a href="https://www.charitywater.org/" target="_blank">charitywater.org</a> | 
+            <a href="https://www.charitywater.org/donate/" target="_blank">Make a difference today</a>
+            <br>
+            <a href="https://www.charitywater.org/donate/" target="_blank" class="donate-link">💧 DONATE NOW</a>
         </footer>
 
         <!-- Game Over Popup -->
@@ -451,11 +547,26 @@
                 this.gameRunning = false;
                 this.gamePaused = false;
                 this.items = [];
-                this.spawnRate = 2000;
-                this.fallSpeed = 2;
+                this.difficulty = 'easy';
+                this.difficultySettings = {
+                    easy: { spawnRate: 2500, fallSpeed: 1.5, winCondition: 1000 },
+                    normal: { spawnRate: 2000, fallSpeed: 2, winCondition: 1500 },
+                    hard: { spawnRate: 1500, fallSpeed: 2.5, winCondition: 2000 }
+                };
+                this.spawnRate = this.difficultySettings[this.difficulty].spawnRate;
+                this.fallSpeed = this.difficultySettings[this.difficulty].fallSpeed;
                 this.boostActive = false;
                 this.comboCount = 0;
                 this.lastCollectionTime = 0;
+                this.milestones = [
+                    { score: 50, message: "Great start! 🌊" },
+                    { score: 100, message: "You're doing amazing! 💧" },
+                    { score: 250, message: "Halfway there! 🎯" },
+                    { score: 500, message: "Incredible progress! ⭐" },
+                    { score: 750, message: "Almost there! 🚀" },
+                    { score: 1000, message: "Outstanding! You're a water hero! 🏆" }
+                ];
+                this.achievedMilestones = [];
                 
                 this.gameArea = document.getElementById('gameArea');
                 this.scoreElement = document.getElementById('score');
@@ -471,12 +582,38 @@
                 document.getElementById('startBtn').addEventListener('click', () => this.startGame());
                 document.getElementById('pauseBtn').addEventListener('click', () => this.togglePause());
                 document.getElementById('boostBtn').addEventListener('click', () => this.activateBoost());
+                
+                // Difficulty selector
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.setDifficulty(e.target.dataset.difficulty));
+                });
+            }
+
+            setDifficulty(difficulty) {
+                if (this.gameRunning) return; // Can't change during game
+                
+                this.difficulty = difficulty;
+                const settings = this.difficultySettings[difficulty];
+                this.spawnRate = settings.spawnRate;
+                this.fallSpeed = settings.fallSpeed;
+                
+                // Update UI
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-difficulty="${difficulty}"]`).classList.add('active');
             }
 
             startGame() {
                 this.gameRunning = true;
                 this.gamePaused = false;
                 document.getElementById('startBtn').textContent = 'RESTART';
+                
+                // Apply difficulty settings
+                const settings = this.difficultySettings[this.difficulty];
+                this.spawnRate = settings.spawnRate;
+                this.fallSpeed = settings.fallSpeed;
+                
                 this.spawnItems();
             }
 
@@ -495,10 +632,14 @@
                 this.wellsCompleted = 0;
                 this.gameRunning = false;
                 this.gamePaused = false;
-                this.spawnRate = 2000;
-                this.fallSpeed = 2;
                 this.boostActive = false;
                 this.comboCount = 0;
+                this.achievedMilestones = [];
+                
+                // Reset to current difficulty settings
+                const settings = this.difficultySettings[this.difficulty];
+                this.spawnRate = settings.spawnRate;
+                this.fallSpeed = settings.fallSpeed;
                 
                 // Clear all items from the game area
                 this.items.forEach(item => {
@@ -513,7 +654,7 @@
                 remainingItems.forEach(item => item.remove());
                 
                 // Clear any score popups that might still be visible
-                const scorePopups = this.gameArea.querySelectorAll('.score-popup');
+                const scorePopups = this.gameArea.querySelectorAll('.score-popup, .milestone-popup');
                 scorePopups.forEach(popup => popup.remove());
                 
                 // Reset boost button
@@ -650,14 +791,22 @@
 
             addScore(points) {
                 this.score += points;
+                this.checkMilestones();
                 this.updateUI();
                 
                 // Level up every 500 points
                 const newLevel = Math.floor(this.score / 500) + 1;
                 if (newLevel > this.level) {
                     this.level = newLevel;
-                    this.fallSpeed += 0.5;
+                    this.fallSpeed += 0.3;
                     this.updateUI();
+                }
+                
+                // Check win condition based on difficulty
+                const winScore = this.difficultySettings[this.difficulty].winCondition;
+                if (this.score >= winScore && !this.hasWon) {
+                    this.hasWon = true;
+                    this.showVictory();
                 }
             }
 
